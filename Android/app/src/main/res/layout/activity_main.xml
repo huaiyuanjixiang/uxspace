@@ -175,6 +175,15 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_align_horizon" />
 
+            <Button
+                android:id="@+id/uuRemoteButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="UU"
+                android:textAllCaps="false"
+                android:contentDescription="Launch UU Remote in XR" />
+
             <ImageButton
                 android:id="@+id/keyboardButton"
                 android:layout_width="0dp"
