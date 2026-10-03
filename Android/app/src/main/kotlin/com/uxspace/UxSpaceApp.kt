@@ -6,6 +6,7 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import com.uxspace.apps.AppCache
+import com.uxspace.apps.UuRemoteDiscovery
 import com.uxspace.desktop.DesktopPresentation
 import com.uxspace.desktop.DesktopShortcutsStore
 import com.uxspace.desktop.DesktopWallpaperStore
@@ -102,6 +103,19 @@ class UxSpaceApp : Application() {
         // Pre-load the app list and rasterise icons on a background thread now, so the
         // drawer's first open is instant and scrolling doesn't hitch on icon draws.
         AppCache.preload(this)
+        // UU Remote XR spike: log the best launcher candidates once the app cache is ready.
+        // This does not launch anything and does not depend on a hard-coded UU package id.
+        AppCache.whenReady { apps ->
+            UuRemoteDiscovery.rank(apps).take(5).forEachIndexed { index, match ->
+                val app = match.app
+                Log.i(
+                    "UxSpace/UURemote",
+                    "candidate #$index score=${match.score} label='${app.label}' " +
+                        "pkg=${app.packageName} activity=${app.activityName} " +
+                        "reasons=${match.reasons.joinToString()}",
+                )
+            }
+        }
 
         // Keeps the rendering layer free of the desktop UI and the privileged path.
         WorkspaceController.desktopContent = { context, display, slotIdx, showTaskbar ->
