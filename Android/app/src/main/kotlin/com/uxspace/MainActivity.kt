@@ -27,6 +27,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.uxspace.apps.AppCache
+import com.uxspace.apps.UuRemoteDiscovery
 import com.uxspace.databinding.ActivityMainBinding
 import com.uxspace.desktop.DesktopWallpaperStore
 import com.uxspace.desktop.WallpaperSource
@@ -339,6 +341,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         WorkspaceController.addZoomListener(zoomHudListener)
+        binding.uuRemoteButton.setOnClickListener { launchUuRemote() }
         binding.keyboardButton.setOnClickListener { toggleKeyboard() }
         // Long-press to jump to Accessibility settings — the auto-keyboard feature
         // needs the UxSpaceAccessibilityService toggled on there.
@@ -946,6 +949,43 @@ class MainActivity : ComponentActivity() {
      * Android Settings. Actual pairing is done via the notification posted while the
      * NEEDS_PAIRING state is active — see [PairingNotifier].
      */
+    /** Launch the best UU Remote candidate directly into UxSpace's trusted display path. */
+    private fun launchUuRemote() {
+        if (!WorkspaceController.isRunning) {
+            Toast.makeText(this, "Connect glasses first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AppCache.whenReady { apps ->
+            val match = UuRemoteDiscovery.rank(apps).firstOrNull()
+            mainHandler.post {
+                if (match == null) {
+                    Log.w("UxSpace/UURemote", "Launch requested but no UU Remote candidate was found")
+                    Toast.makeText(
+                        this,
+                        "UU Remote was not found. Install/open it once, then retry.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    return@post
+                }
+                val app = match.app
+                Log.i(
+                    "UxSpace/UURemote",
+                    "launch score=${match.score} label='${app.label}' pkg=${app.packageName} activity=${app.activityName}",
+                )
+                val accepted = WorkspaceController.launchApp(
+                    app.packageName,
+                    app.activityName,
+                    app.label,
+                )
+                Toast.makeText(
+                    this,
+                    if (accepted) "Launching ${app.label} in XR" else "Workspace is not ready for app launch",
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
+    }
+
     private fun onSetupAction() {
         when (PrivilegedService.state) {
             State.NEEDS_DEVELOPER_OPTIONS -> openAboutPhone()
