@@ -22,6 +22,9 @@ object UuRemoteDiscovery {
     fun find(context: Context): InstalledApp? =
         rank(InstalledApps.query(context)).firstOrNull()?.app
 
+    /** Best candidate from an already-populated app cache. */
+    fun find(apps: List<InstalledApp>): InstalledApp? = rank(apps).firstOrNull()?.app
+
     /** Rank candidates for diagnostics and future build variants. */
     fun rank(apps: List<InstalledApp>): List<Match> =
         apps.mapNotNull { app ->
