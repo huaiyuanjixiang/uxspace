@@ -2,7 +2,7 @@ name: Android
 
 on:
   push:
-    branches: [main]
+    branches: [main, uu-remote-viture]
     paths:
       - "Android/**"
       - ".github/workflows/android.yml"
@@ -29,6 +29,8 @@ jobs:
         working-directory: Android
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-java@v4
         with:
@@ -46,10 +48,23 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null
           "$SDKMANAGER" --install "ndk;30.0.14904198" "cmake;4.1.2" > /dev/null
 
-      # The VITURE SDK (glasses/src/main/jniLibs, cpp/include) is not in the repo, so CI
-      # runs JVM unit tests only — no native build, no APK.
+      - name: Install Rust Android target
+        run: |
+          rustup target add aarch64-linux-android
+          cargo --version
+          rustc --version
+
       - name: Run unit tests
         run: sh ./gradlew testDebugUnitTest --console=plain
+
+      - name: Build debug APK
+        run: sh ./gradlew :app:assembleDebug --console=plain --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: uxspace-uu-remote-viture-debug
+          path: Android/app/build/outputs/apk/debug/*.apk
 
       - name: Upload test reports
         if: failure()
