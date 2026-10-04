@@ -1,0 +1,3 @@
+[submodule "Android/glasses/viture-v2"]
+	path = Android/glasses/viture-v2
+	url = https://github.com/huaiyuanjixiang/viture-v2.git
